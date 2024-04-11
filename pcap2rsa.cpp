@@ -1,12 +1,10 @@
 #include <iostream>
-#include <regex>
+#include <iomanip>
 #include <string>
 
-#include <pcapplusplus/Packet.h>
 #include <pcapplusplus/PcapFileDevice.h>
 
 #include <args.hxx>
-#include <iomanip>
 
 #include "progressbar.hpp"
 
