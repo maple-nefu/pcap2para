@@ -1,7 +1,7 @@
 #include "extract.h"
 
 
-std::vector<std::string> extract_payload(const std::string_view payload, const std::vector<boost::regex> &regexes) {
+std::vector<std::string> extract_payload(const std::string_view &payload, const std::vector<boost::regex> &regexes) {
     std::vector<std::string> extracted;
     extracted.reserve(regexes.size());
     for (const auto &pattern : regexes) {
