@@ -12,7 +12,7 @@
 
 #include "packet_feature.h"
 
-#ifdef _MSC_VER
+#ifdef WIN32
 #pragma comment(lib, "Ws2_32.lib")
 #endif
 
