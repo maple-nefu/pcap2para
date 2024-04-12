@@ -43,18 +43,18 @@ int get_packet_count(const std::string &pcap_path) {
     return packet_count;
 }
 
-std::vector<boost::regex> get_regexes(const std::string &parameters) {
+std::vector<boost::regex> get_regexes(const std::string &cli_para) {
     ZoneScoped;
 
     std::vector<boost::regex> pattern_regexes;
-    std::stringstream         para_ss(parameters);
-    if (parameters.find(',') != std::string::npos) { // check if multiple parameters
+    std::stringstream         para_ss(cli_para);
+    if (cli_para.find(',') != std::string::npos) { // check if multiple parameters are provided
         std::string single_parameter;
         while (std::getline(para_ss, single_parameter, ',')) {
-            pattern_regexes.emplace_back(single_parameter + "=([^&]+)");
+            pattern_regexes.emplace_back(std::format("{}=([^&]+)", single_parameter));
         }
     } else {
-        pattern_regexes.emplace_back(parameters + "=([^&]+)");
+        pattern_regexes.emplace_back(std::format("{}=([^&]+)", cli_para));
     }
 
     return pattern_regexes;
