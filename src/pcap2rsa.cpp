@@ -2,6 +2,8 @@
 #include <iomanip>
 #include <string>
 
+#include <tracy/Tracy.hpp>
+
 #include <pcapplusplus/PcapFileDevice.h>
 
 #include <args.hxx>
@@ -14,7 +16,6 @@
 #pragma comment(lib, "Ws2_32.lib")
 #endif
 
-#include "tracy/Tracy.hpp"
 
 void hide_cursor() {
 #ifdef WIN32

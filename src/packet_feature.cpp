@@ -2,6 +2,10 @@
 
 #include <iostream>
 #include <sstream>
+#include <fstream>
+#include <format>
+
+#include <tracy/Tracy.hpp>
 
 #include <pcapplusplus/PcapFileDevice.h>
 #include <pcapplusplus/TcpLayer.h>
@@ -10,8 +14,6 @@
 #include "progressbar.hpp"
 
 #include "extract.h"
-
-#include <tracy/Tracy.hpp>
 
 
 int get_packet_count(const std::string &pcap_path) {
@@ -25,7 +27,7 @@ int get_packet_count(const std::string &pcap_path) {
     }
 
     if (!size_reader->open()) {
-        std::cerr << "Cannot open " + pcap_path + " for reading" << '\n';
+        std::cerr << std::format("Cannot open {} for reading\n", pcap_path);
         return -1;
     }
 
