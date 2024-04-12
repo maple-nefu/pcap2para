@@ -11,8 +11,12 @@
 
 #include "extract.h"
 
+#include <tracy/Tracy.hpp>
+
 
 int get_packet_count(const std::string &pcap_path) {
+    ZoneScoped;
+
     pcpp::IFileReaderDevice *size_reader = pcpp::IFileReaderDevice::getReader(pcap_path);
 
     if (size_reader == nullptr) {
@@ -38,16 +42,16 @@ int get_packet_count(const std::string &pcap_path) {
 }
 
 std::vector<boost::regex> get_regexes(const std::string &parameters) {
+    ZoneScoped;
+
     std::vector<boost::regex> pattern_regexes;
     std::stringstream         para_ss(parameters);
-    if (parameters.find(',') != std::string::npos) {
+    if (parameters.find(',') != std::string::npos) { // check if multiple parameters
         std::string single_parameter;
-        // multiple parameters
         while (std::getline(para_ss, single_parameter, ',')) {
             pattern_regexes.emplace_back(single_parameter + "=([^&]+)");
         }
     } else {
-        // single parameter
         pattern_regexes.emplace_back(parameters + "=([^&]+)");
     }
 
@@ -55,7 +59,8 @@ std::vector<boost::regex> get_regexes(const std::string &parameters) {
 }
 
 int match_regex_from_reader(const bool debug, std::ofstream &fout, const std::string &pcap_path, const int packetCount, const std::vector<boost::regex> &pattern_regexes) {
-    pcpp::RawPacket          raw_packet;
+    ZoneScoped;
+
     pcpp::IFileReaderDevice *reader = pcpp::IFileReaderDevice::getReader(pcap_path);
     reader->open();
 
@@ -63,12 +68,13 @@ int match_regex_from_reader(const bool debug, std::ofstream &fout, const std::st
     int         proc = 0;
     progressbar pb(100);
     pb.show_bar(debug);
+
+    pcpp::RawPacket raw_packet;
     while (reader->getNextPacket(raw_packet)) {
         if (debug) {
-            idx++;
             // update progress bar every 1% of the total num of packets have been processed,
             // 100 is ratio which must equal to value in progressbar variable definition above.
-            if (idx % (packetCount / 100) == 0) {
+            if (++idx % (packetCount / 100) == 0) {
                 pb.update();
             }
         }
@@ -79,8 +85,8 @@ int match_regex_from_reader(const bool debug, std::ofstream &fout, const std::st
             continue;
         }
 
-        if (pcpp::TcpLayer *tcpLayer = parsed_packet.getLayerOfType<pcpp::TcpLayer>();
-            tcpLayer->getDstPort() != 80) {
+        if (const pcpp::TcpLayer *tcp_layer = parsed_packet.getLayerOfType<pcpp::TcpLayer>();
+            tcp_layer->getDstPort() != 80) {
             continue;
         }
 
@@ -94,22 +100,19 @@ int match_regex_from_reader(const bool debug, std::ofstream &fout, const std::st
             continue;
         }
 
-        const auto   data_ptr = reinterpret_cast<std::string_view::const_pointer>(http_layer->getData());
-        const size_t size     = http_layer->getDataLen();
+        const auto   payload_ptr = reinterpret_cast<std::string_view::const_pointer>(http_layer->getLayerPayload());
+        const size_t size        = http_layer->getLayerPayloadSize();
 
-        if (data_ptr == nullptr || size <= 0) {
+        if (payload_ptr == nullptr || size <= 0) {
             continue;
         }
 
         proc++;
 
-        const std::string_view   payload(data_ptr, size);
+        const std::string_view   payload(payload_ptr, size);
         std::vector<std::string> para_list = extract_payload(payload, pattern_regexes);
 
         if (!para_list.empty()) {
-            // rsa_list.at(0) is always rsa string which length greater than 16
-            // 16 is not a magic number but a thumb rule because content in rsa is a DES output
-            // if (para_list.at(0).length() > 16) {
             for (const auto &p : para_list) {
                 fout << p;
                 if (&p != &para_list.back()) {
@@ -117,14 +120,15 @@ int match_regex_from_reader(const bool debug, std::ofstream &fout, const std::st
                 }
             }
             fout << '\n';
-            // }
         }
+    }
+
+    if (debug) {
+        std::cout << '\n';
     }
 
     reader->close();
     delete reader;
-
-    std::cout << '\n';
 
     return proc;
 }
