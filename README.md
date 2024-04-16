@@ -1,4 +1,4 @@
-# pcap2rsa
+# pcap2para
 Extract HTTP payloads from PCAP/NG file
 
 ## Requirements
